@@ -2,7 +2,7 @@
 
 Nuclear magnetic resonance (NMR) is an unbiased, reproducible, and non-destructive detection method widely used to analyze and characterize complex systems. However, it is challenging to perform mixture identification because of the offset and peak overlap of chemical shifts that often exist in mixtures. Convolutional neural networks have translation invariance and high tolerance to distortion, which are good at extracting local features to solve the above problems well. Here, we propose a deep learning-based mixture identification method (DeepMID) that can be used to identify plant flavors (mixtures) in a formulated flavor (mixture consisting of several plant flavors). This is the code repo for the paper *Deep Learning-based Mixture Identification for Nuclear Mag-netic Resonance Spectroscopy*.
 
-![DeepMID](image\DeepMID.png)
+![DeepMID](image/DeepMID.png)
 
 # Installation
 
