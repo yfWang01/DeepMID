@@ -88,3 +88,27 @@ def load_test_data(aug_test):
     pickle_file = open('data_augment_test.pkl', 'wb')
     pickle.dump(aug_test, pickle_file, protocol=4)
     pickle_file.close()
+
+if __name__=="__main__":
+    from readBruker import read_bruker_hs_base
+
+    spectra = read_bruker_hs_base('data/plant_flavors', False, True, False)
+
+    aug_train = data_augmentation(spectra, 40000, 5)
+    # data_augmentation(spectra, amount, max_plant_flavors)
+    load_train_data(aug_train)
+
+    pickle_file = open('data_augment_train.pkl', 'rb')
+    aug_train = pickle.load(pickle_file)
+
+    aug_valid = data_augmentation(spectra, 5000, 5)
+    load_valid_data(aug_valid)
+
+    pickle_file = open('data_augment_valid.pkl', 'rb')
+    aug_valid = pickle.load(pickle_file)
+
+    aug_test = data_augmentation(spectra, 5000, 5)
+    load_valid_data(aug_test)
+
+    pickle_file = open('data_augment_test.pkl', 'rb')
+    aug_test = pickle.load(pickle_file)

@@ -206,8 +206,8 @@ if __name__ == "__main__":
         model = load_MICNN(model_save_path + model_name)
         plot_loss_accuracy(model)
 
-        stds = read_bruker_hs_base('data/standards_13', False, True, False)
-        spectra = read_bruker_hs_base('data/known', False, True, False)
+        stds = read_bruker_hs_base('data/plant_flavors', False, True, False)
+        spectra = read_bruker_hs_base('data/known_formulated_flavors', False, True, False)
 
         # test set
         pickle_file_test = open('aug/data_augment_test.pkl', 'rb')
