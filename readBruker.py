@@ -1,8 +1,8 @@
 import os
 
+import airPLS
 import nmrglue as ng
 import numpy as np
-import pybaselines
 from tqdm import tqdm
 
 
@@ -25,34 +25,27 @@ def read_bruker_h_base(nmr_path, bRaw=False, bMinMaxScale=False):
         ppms = np.arange(start, end, -step)[:zero_fill_size]
 
         # baseline
-        baseline = pybaselines.whittaker.arpls(fid, lam=100000.0, diff_order=2, max_iter=50, tol=0.001, weights=None)[0]
+        baseline = airPLS(fid, lambda_=100, porder=1, itermax=15)
         fid = fid - baseline
+
         # set solvent peaks to zero
         q = np.min(np.where(np.round(ppms, 3) == 5.365))
         w = np.min(np.where(np.round(ppms, 3) == 5.100))
-        e = np.min(np.where(np.round(ppms, 3) == 3.530))
-        r = np.min(np.where(np.round(ppms, 3) == 3.410))
         t = np.min(np.where(np.round(ppms, 3) == 4.160))
         y = np.min(np.where(np.round(ppms, 3) == 3.800))
         u = np.min(np.where(np.round(ppms, 3) == 1.060))
         i = np.min(np.where(np.round(ppms, 3) == 1.030))
         o = np.min(np.where(np.round(ppms, 3) == 1.180))
         p = np.min(np.where(np.round(ppms, 3) == 1.105))
-        a = np.min(np.where(np.round(ppms, 3) == 3.300))
+        a = np.min(np.where(np.round(ppms, 3) == 3.530))
         s = np.min(np.where(np.round(ppms, 3) == 3.190))
-        g = np.min(np.where(np.round(ppms, 3) == 4.690))
-        h = np.min(np.where(np.round(ppms, 3) == 4.580))
-        x = np.min(np.where(np.round(ppms, 3) == 3.350))
-        c = np.min(np.where(np.round(ppms, 3) == 3.315))
 
         fid[q:w] = 0
-        fid[e:r] = 0
         fid[t:y] = 0
         fid[u:i] = 0
         fid[o:p] = 0
         fid[a:s] = 0
-        fid[g:h] = 0
-        fid[x:c] = 0
+
     # Normalization
     if bMinMaxScale:
         fid = fid / np.max(fid)
