@@ -99,7 +99,7 @@ class SpatialPyramidPooling(Layer):
         return outputs
 
 
-def MICNN(xshapes, num_conv_layers, lr):
+def DeepMID(xshapes, num_conv_layers, lr):
     inputs = create_input_layers(xshapes)
     convs = create_convolution_layers(inputs, num_layers=num_conv_layers)
     if len(convs) >= 2:
@@ -123,7 +123,7 @@ def MICNN(xshapes, num_conv_layers, lr):
     return model
 
 
-def train_MICNN(model, Xs, y, batch, epochs, Xs_valid, y_valid, callbacks=None):
+def train_DeepMID(model, Xs, y, batch, epochs, Xs_valid, y_valid, callbacks=None):
     Xs3d = [X.reshape((X.shape[0], X.shape[1], 1)) for X in Xs]
     Xs3d_valid = [X.reshape((X.shape[0], X.shape[1], 1)) for X in Xs_valid]
     model.fit(Xs3d, y, batch_size=batch, epochs=epochs, validation_data=(Xs3d_valid, y_valid), callbacks=callbacks)
@@ -148,14 +148,14 @@ def plot_loss_accuracy(model):
     plt.ylabel('Loss', fontsize=12)
 
 
-def save_MICNN(model, model_name):
+def save_DeepMID(model, model_name):
     model_path = f'{model_name}.h5'
     history_path = f'{model_name}.pkl'
     model.save(model_path)
     pickle.dump(model.history.history, open(history_path, "wb"))
 
 
-def load_MICNN(model_name):
+def load_DeepMID(model_name):
     model_path = f'{model_name}.h5'
     history_path = f'{model_name}.pkl'
     model = models.load_model(model_path, custom_objects={'SpatialPyramidPooling': SpatialPyramidPooling})
@@ -165,18 +165,18 @@ def load_MICNN(model_name):
     return model
 
 
-def check_MICNN(model_name):
+def check_DeepMID(model_name):
     model_path = f'{model_name}.h5'
     history_path = f'{model_name}.pkl'
     return os.path.isfile(model_path) and os.path.isfile(history_path)
 
 
-def predict_MICNN(model, Xs):
+def predict_DeepMID(model, Xs):
     Xs3d = [X.reshape((X.shape[0], X.shape[1], 1)) for X in Xs]
     return model.predict(Xs3d)
 
 
-def evaluate_MICNN(model, Xs, y):
+def evaluate_DeepMID(model, Xs, y):
     Xs3d = [X.reshape((X.shape[0], X.shape[1], 1)) for X in Xs]
     return model.evaluate(Xs3d, y)
 
@@ -197,23 +197,23 @@ if __name__ == "__main__":
         pickle_file_valid = open('aug/data_augment_valid.pkl', 'rb')
         aug_valid = pickle.load(pickle_file_valid)
 
-        model = MICNN([aug['R'].shape, aug['S'].shape], 8)
-        # MICNN(xshapes, num_conv_layers-1)
-        train_MICNN(model, [aug['R'], aug['S']], aug['y'], 64, 100, [aug_valid['R'], aug_valid['S']], aug_valid['y'])
-        # train_MICNN(model, Xs, y, batch, epochs, Xs_valid, y_valid):
-        save_MICNN(model, model_save_path + model_name)
+        model = DeepMID([aug['R'].shape, aug['S'].shape], 8)
+        # DeepMID(xshapes, num_conv_layers-1)
+        train_DeepMID(model, [aug['R'], aug['S']], aug['y'], 64, 100, [aug_valid['R'], aug_valid['S']], aug_valid['y'])
+        # train_DeepMID(model, Xs, y, batch, epochs, Xs_valid, y_valid):
+        save_DeepMID(model, model_save_path + model_name)
 
-        model = load_MICNN(model_save_path + model_name)
+        model = load_DeepMID(model_save_path + model_name)
         plot_loss_accuracy(model)
 
-        stds = read_bruker_hs_base('data/plant_flavors', False, True, False)
-        spectra = read_bruker_hs_base('data/known_formulated_flavors', False, True, False)
+        plant_flavors = read_bruker_hs_base('data/plant_flavors', False, True, False)
+        known_formulated_flavors = read_bruker_hs_base('data/known_formulated_flavors', False, True, False)
 
         # test set
         pickle_file_test = open('aug/data_augment_test.pkl', 'rb')
         aug_test = pickle.load(pickle_file_test)
-        ev = evaluate_MICNN(model, [aug_test['R'], aug_test['S']], aug_test['y'])
-        yp_test = predict_MICNN(model, [aug_test['R'], aug_test['S']])
+        ev = evaluate_DeepMID(model, [aug_test['R'], aug_test['S']], aug_test['y'])
+        yp_test = predict_DeepMID(model, [aug_test['R'], aug_test['S']])
         yp_test_list = [1 if yp_test[i, 0] >= 0.5 else 0 for i in range(yp_test.shape[0])]
         yp_test = np.array(yp_test_list).reshape(yp_test.shape)
         cnf_matrix = confusion_matrix(aug_test['y'], yp_test)
@@ -221,41 +221,41 @@ if __name__ == "__main__":
 
         # known formulated flavors
         for i in range(16):
-            query = spectra[i]
+            query = known_formulated_flavors[i]
 
             p = query['ppm'].shape[0]
-            n = len(stds)
+            n = len(plant_flavors)
             R = np.zeros((n, p), dtype=np.float32)
             Q = np.zeros((n, p), dtype=np.float32)
             for i in range(n):
-                R[i,] = stds[i]['fid']
+                R[i,] = plant_flavors[i]['fid']
                 Q[i,] = query['fid']
-            yp = predict_MICNN(model, [R, Q])
+            yp = predict_DeepMID(model, [R, Q])
 
-            stds_df = pd.read_csv('data/standard_13.csv', encoding='gb2312')
+            plant_flavors_df = pd.read_csv('data/plant_flavors.csv', encoding='gb2312')
             result_df = pd.DataFrame(columns=['Name', 'Probability'])
             for t in range(n):
-                result_df.loc[len(result_df)] = [stds[t]['name'], yp[t][0]]
+                result_df.loc[len(result_df)] = [plant_flavors[t]['name'], yp[t][0]]
 
-            result = pd.merge(stds_df, result_df, on=['Name'])
+            result = pd.merge(plant_flavors_df, result_df, on=['Name'])
             result1 = result.sort_values(by=['Probability'], ascending=False)
             outputpath = "{} {} {}".format(
-                "result/model_1_known_formulated_flavors_result_",
+                "result/known_formulated_flavors_result_",
                 query['name'], ".csv")
             result1.to_csv(outputpath, sep=',', encoding='utf_8_sig', index=True, header=True)
 
     else:
-        model = load_MICNN(model_save_path + model_name)
+        model = load_DeepMID(model_save_path + model_name)
         plot_loss_accuracy(model)
 
-        stds = read_bruker_hs_base('data/standards_13', False, True, False)
-        spectra = read_bruker_hs_base('data/known', False, True, False)
+        plant_flavors = read_bruker_hs_base('data/plant_flavors', False, True, False)
+        known_formulated_flavors = read_bruker_hs_base('data/known_formulated_flavors', False, True, False)
 
         # test set
         pickle_file_test = open('aug/data_augment_test.pkl', 'rb')
         aug_test = pickle.load(pickle_file_test)
-        ev = evaluate_MICNN(model, [aug_test['R'], aug_test['S']], aug_test['y'])
-        yp_test = predict_MICNN(model, [aug_test['R'], aug_test['S']])
+        ev = evaluate_DeepMID(model, [aug_test['R'], aug_test['S']], aug_test['y'])
+        yp_test = predict_DeepMID(model, [aug_test['R'], aug_test['S']])
         yp_test_list = [1 if yp_test[i, 0] >= 0.5 else 0 for i in range(yp_test.shape[0])]
         yp_test = np.array(yp_test_list).reshape(yp_test.shape)
         cnf_matrix = confusion_matrix(aug_test['y'], yp_test)
@@ -263,23 +263,23 @@ if __name__ == "__main__":
 
         # known formulated flavors
         for i in range(16):
-            query = spectra[i]
+            query = known_formulated_flavors[i]
 
             p = query['ppm'].shape[0]
-            n = len(stds)
+            n = len(plant_flavors)
             R = np.zeros((n, p), dtype=np.float32)
             Q = np.zeros((n, p), dtype=np.float32)
             for i in range(n):
-                R[i,] = stds[i]['fid']
+                R[i,] = plant_flavors[i]['fid']
                 Q[i,] = query['fid']
-            yp = predict_MICNN(model, [R, Q])
+            yp = predict_DeepMID(model, [R, Q])
 
-            stds_df = pd.read_csv('data/standard_13.csv', encoding='gb2312')
+            plant_flavors_df = pd.read_csv('data/plant_flavors.csv', encoding='gb2312')
             result_df = pd.DataFrame(columns=['Name', 'Probability'])
             for t in range(n):
-                result_df.loc[len(result_df)] = [stds[t]['name'], yp[t][0]]
+                result_df.loc[len(result_df)] = [plant_flavors[t]['name'], yp[t][0]]
 
-            result = pd.merge(stds_df, result_df, on=['Name'])
+            result = pd.merge(plant_flavors_df, result_df, on=['Name'])
             result1 = result.sort_values(by=['Probability'], ascending=False)
             outputpath = "{} {} {}".format(
                 "result/model_1_known_formulated_flavors_result_",
